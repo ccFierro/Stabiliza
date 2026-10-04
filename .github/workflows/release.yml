@@ -1,0 +1,47 @@
+name: Instalador Windows
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Verificar etiqueta de versión
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          if ($env:GITHUB_REF_NAME -ne "v$version") { throw 'La etiqueta debe coincidir con package.json' }
+      - run: npm test
+      - name: Crear instalador para verificar
+        run: npm run dist:win
+      - name: Verificar las ocho plantas en el ejecutable
+        shell: pwsh
+        run: |
+          $appProcess = Start-Process -FilePath '.\dist\win-unpacked\Estabiliza.exe' -ArgumentList '--smoke-test' -WindowStyle Hidden -PassThru
+          if (-not $appProcess.WaitForExit(120000)) { $appProcess.Kill(); throw 'Tiempo de prueba agotado' }
+          if ($appProcess.ExitCode -ne 0) { throw 'La prueba del ejecutable falló' }
+          if (-not (Test-Path 'dist/smoke-results.json')) { throw 'Falta el resultado de la prueba' }
+      - name: Crear publicación en borrador (etiqueta)
+        if: startsWith(github.ref, 'refs/tags/')
+        run: npm run release:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Estabiliza-Windows
+          path: |
+            dist/*.exe
+            dist/*.blockmap
+            dist/latest.yml
+            dist/smoke-results.json
+          if-no-files-found: error
