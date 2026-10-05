@@ -22,7 +22,7 @@ function menu(){
       {label:'Reiniciar e instalar',enabled:updates.ready&&!updates.installing,click:()=>{void showProgress();void updates.install();}}
     ]},
     {label:'Ayuda',submenu:[
-      {label:'Novedades de esta versión',click:()=>show(`Novedades · Estabiliza ${app.getVersion()}`,'Actualizaciones automáticas al iniciar, con pantalla de progreso e instalación silenciosa. Puedes abrir el laboratorio sin esperar; durante un ensayo, la instalación requiere tu confirmación.')},
+      {label:'Novedades de esta versión',click:()=>show(`Novedades · Estabiliza ${app.getVersion()}`,'Nueva galería de inicio con los ocho escenarios, ilustraciones y sus mandos y mediciones. Puedes volver a la galería desde el logotipo del laboratorio. Se mantienen las actualizaciones automáticas al iniciar.')},
       {label:'Acerca de Estabiliza',click:()=>show(`Estabiliza ${app.getVersion()}`,'Laboratorio local de sistemas de control. La comunicación TCP con Simulink está pendiente de implementación.')}
     ]}
   ]));
@@ -78,8 +78,8 @@ else{
         for(const target of [window,progressWindow])if(target&&!target.isDestroyed()&&target.webContents.getURL()===`${origin}/update.html`)target.webContents.send('updates:state',state);
         menu();
       },
-      openLab:()=>window.loadURL(origin),
-      idle:async()=>{try{return canInstall(await window.webContents.executeJavaScript('window.estabiliza?.readMeasurement()'));}catch{return false;}},
+      openLab:()=>window.loadURL(`${origin}/gallery.html`),
+      idle:async()=>{if(window.webContents.getURL()===`${origin}/gallery.html`)return true;try{return canInstall(await window.webContents.executeJavaScript('window.estabiliza?.readMeasurement()'));}catch{return false;}},
       confirm:async()=>{
         const {response}=await dialog.showMessageBox(window,{type:'question',title:'Instalar actualización',message:'¿Reiniciar para actualizar?',detail:'Exporta los datos que quieras conservar. El ensayo actual no se restaura después del reinicio.',buttons:['Ahora no','Reiniciar e instalar'],defaultId:0,cancelId:0});
         return response===1;

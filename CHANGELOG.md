@@ -1,5 +1,15 @@
 # Novedades
 
+## 0.1.3
+
+- Nueva galería de inicio con las ocho plantas, ilustraciones, descripciones, mandos y variables observadas.
+- Tarjetas adaptables a pantallas grandes y pequeñas, con navegación por teclado.
+- Acceso para volver a la galería desde el logotipo de cualquier escenario; al salir se cierra el ensayo actual.
+- Al terminar la comprobación de actualizaciones, o al elegir abrir sin esperar, se muestra la galería sin iniciar una planta detrás.
+- Se permite instalar una actualización desde la galería, donde no existe un ensayo activo.
+
+Desde 0.1.2 esta versión se puede recibir mediante el inicio automático y la instalación silenciosa.
+
 ## 0.1.2
 
 - Busca actualizaciones automáticamente al abrir la app, antes de cargar la planta.

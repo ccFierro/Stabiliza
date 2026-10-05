@@ -20,7 +20,22 @@ exports.run = async (window, origin) => {
   const displayedProgress=await window.webContents.executeJavaScript("document.getElementById('track').getAttribute('aria-valuenow')");
   if(displayedProgress!=='55')throw new Error('No se actualiza la barra de progreso');
   await fs.writeFile(path.join(process.cwd(),'dist','preview-update.png'),(await window.webContents.capturePage()).toPNG());
-  for (const [route, system] of [['/', 'ball'], ['/pivot.html', 'pivot'], ...['pendulum','boiler','maglev','tanks','beam','twin'].map(id=>[`/lab.html?system=${id}`,id])]) {
+  const galleryLoaded=new Promise(resolve=>window.webContents.once('did-finish-load',resolve));
+  await window.webContents.executeJavaScript("document.getElementById('continue').click()");
+  await galleryLoaded;
+  if(window.webContents.getURL()!==`${origin}/gallery.html`)throw new Error('El inicio no lleva a la galería');
+  const cards=await window.webContents.executeJavaScript("[...document.querySelectorAll('.scene-card')].map(a=>({system:a.dataset.scene,route:a.getAttribute('href')}))");
+  if(cards.length!==8||new Set(cards.map(c=>c.system)).size!==8)throw new Error('La galería no contiene las ocho plantas');
+  const noPlant=await window.webContents.executeJavaScript('typeof window.estabiliza === "undefined"');
+  if(!noPlant)throw new Error('Hay una planta ejecutándose detrás de la galería');
+  await fs.writeFile(path.join(process.cwd(),'dist','preview-gallery.png'),(await window.webContents.capturePage()).toPNG());
+  window.setMinimumSize(320,500);window.setSize(390,850);
+  await new Promise(resolve=>setTimeout(resolve,200));
+  const fits=await window.webContents.executeJavaScript('document.documentElement.scrollWidth<=innerWidth');
+  if(!fits)throw new Error('La galería desborda en una pantalla estrecha');
+  await fs.writeFile(path.join(process.cwd(),'dist','preview-gallery-mobile.png'),(await window.webContents.capturePage()).toPNG());
+  window.setMinimumSize(760,600);window.setSize(1440,960);
+  for (const {route,system} of cards) {
     await window.loadURL(origin+route);
     const deadline = Date.now()+10000;
     let state;
@@ -30,6 +45,8 @@ exports.run = async (window, origin) => {
       await new Promise(resolve=>setTimeout(resolve,100));
     } while(Date.now()<deadline);
     if (state?.system !== system) throw new Error(`No se inicializó ${system}`);
+    const back=await window.webContents.executeJavaScript("document.querySelector('.brand').getAttribute('href')");
+    if(back!=='/gallery.html')throw new Error(`Falta el acceso a la galería en ${system}`);
     const isolated = await window.webContents.executeJavaScript('typeof require === "undefined" && typeof process === "undefined"');
     if (!isolated) throw new Error('Node expuesto en la interfaz');
     const updatesProtected=await window.webContents.executeJavaScript("window.desktopUpdates.state().then(()=>false,()=>true)");

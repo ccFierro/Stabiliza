@@ -53,6 +53,8 @@ Usar siempre la etiqueta correspondiente a la nueva versión de `package.json`. 
 
 ## Comportamiento de actualización
 
+Desde 0.1.3, después de la comprobación de inicio se abre una galería de las ocho plantas. Elegir una tarjeta inicia ese escenario. El logotipo de cada planta permite volver a la galería; salir del escenario cierra el ensayo, por lo que se deben exportar los datos antes de cambiar.
+
 - Desde 0.1.2, comprueba al iniciar, antes de cargar cualquier planta, con una pantalla de progreso propia. Descarga e instala automáticamente en ese momento, mediante NSIS silencioso, y vuelve a abrir la app.
 - Una comprobación sin conexión o que supera diez segundos permite entrar al laboratorio. **Abrir laboratorio sin esperar** también permite continuar durante la descarga; una vez dentro, no instala automáticamente.
 - Durante una sesión vuelve a comprobar cada seis horas y descarga en segundo plano. **Actualizaciones → Ver progreso de actualización** muestra el estado.

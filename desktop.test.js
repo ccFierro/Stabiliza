@@ -12,7 +12,7 @@ test('el servidor de escritorio usa puerto libre y solo expone recursos de la ap
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   t.after(()=>new Promise(resolve=>server.close(resolve)));
   const origin=`http://127.0.0.1:${server.address().port}`;
-  for(const route of ['/','/pivot.html','/lab.html?system=maglev','/plants.js']) {
+  for(const route of ['/','/pivot.html','/lab.html?system=maglev','/plants.js','/gallery.html','/gallery.js','/gallery.css']) {
     const response=await fetch(origin+route);
     assert.equal(response.status,200);
     assert.match(response.headers.get('content-security-policy'),/script-src 'self'/);

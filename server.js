@@ -9,7 +9,7 @@ const allowed = new Set(['index.html', 'pivot.html', 'styles.css', 'app.js', 'ph
 export function createLocalServer() {
 return http.createServer(async (req, res) => {
   const name = new URL(req.url, 'http://localhost').pathname.slice(1) || 'index.html';
-  if (!allowed.has(name)) { res.writeHead(404); res.end('No encontrado'); return; }
+  if (!allowed.has(name) && !['gallery.html','gallery.js','gallery.css'].includes(name)) { res.writeHead(404); res.end('No encontrado'); return; }
   try {
     const data = await readFile(path.join(root, name));
     res.writeHead(200, { 'Content-Type': `${types[path.extname(name)]}; charset=utf-8`, 'Cache-Control': 'no-store', 'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'" });
