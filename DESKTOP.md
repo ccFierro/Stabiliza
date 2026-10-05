@@ -53,10 +53,13 @@ Usar siempre la etiqueta correspondiente a la nueva versión de `package.json`. 
 
 ## Comportamiento de actualización
 
-- Comprobación al iniciar y cada seis horas; también desde **Actualizaciones → Buscar actualizaciones**.
-- Descarga con consentimiento, en segundo plano; muestra progreso en el menú.
-- Instalación solo mediante **Reiniciar e instalar**, después de pausar y desconectar el mando externo. Se vuelve a comprobar el estado tras confirmar.
+- Desde 0.1.2, comprueba al iniciar, antes de cargar cualquier planta, con una pantalla de progreso propia. Descarga e instala automáticamente en ese momento, mediante NSIS silencioso, y vuelve a abrir la app.
+- Una comprobación sin conexión o que supera diez segundos permite entrar al laboratorio. **Abrir laboratorio sin esperar** también permite continuar durante la descarga; una vez dentro, no instala automáticamente.
+- Durante una sesión vuelve a comprobar cada seis horas y descarga en segundo plano. **Actualizaciones → Ver progreso de actualización** muestra el estado.
+- Dentro del laboratorio, **Reiniciar e instalar** requiere pausar, desconectar el mando externo y confirmar. Se vuelve a comprobar el estado antes de instalar.
 - No instala automáticamente al cerrar. Sin internet, la simulación local sigue disponible.
+- La sustitución de archivos exige cerrar brevemente la app; no se muestra el asistente NSIS al actualizar desde 0.1.2. Los avisos de permisos de Windows, si corresponden, dependen del sistema.
+- La actualización desde 0.1.1 aún usa el flujo antiguo una última vez. El flujo nuevo solo puede ejecutarse cuando 0.1.2 ya está instalada.
 - Los datos del ensayo están en memoria: exportar CSV antes de cerrar o reiniciar. Aún no hay recuperación de sesión ni persistencia de parámetros.
 - El instalador conserva la carpeta de datos del usuario; no se fuerza degradación a versiones anteriores.
 

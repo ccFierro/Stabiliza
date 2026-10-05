@@ -5,7 +5,7 @@ import path from 'node:path';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 const types = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript' };
-const allowed = new Set(['index.html', 'pivot.html', 'styles.css', 'app.js', 'physics.js', 'input-source.js', 'scopes.js', 'workspace-ui.js', 'lab.html', 'lab.js', 'plants.js', 'plant-scenes.js']);
+const allowed = new Set(['index.html', 'pivot.html', 'styles.css', 'app.js', 'physics.js', 'input-source.js', 'scopes.js', 'workspace-ui.js', 'lab.html', 'lab.js', 'plants.js', 'plant-scenes.js', 'update.html', 'update.css', 'update.js']);
 export function createLocalServer() {
 return http.createServer(async (req, res) => {
   const name = new URL(req.url, 'http://localhost').pathname.slice(1) || 'index.html';
