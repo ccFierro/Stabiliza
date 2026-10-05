@@ -20,7 +20,10 @@ function menu() {
       { label: 'Descargar actualización', enabled: available && !downloading && !ready, click: download },
       { label: 'Reiniciar e instalar…', enabled: ready, click: install }
     ] },
-    { label: 'Ayuda', submenu: [{ label: 'Acerca de Estabiliza', click: () => show(`Estabiliza ${app.getVersion()}`, 'Laboratorio de sistemas de control. La física se ejecuta localmente. La comunicación TCP con Simulink está pendiente de implementación.') }] }
+    { label: 'Ayuda', submenu: [
+      { label: 'Novedades de esta versión', click: () => show(`Novedades · Estabiliza ${app.getVersion()}`, 'Versión 0.1.1\n\nLa barra de título muestra la versión instalada y este menú permite reconocer la nueva versión tras actualizar.\n\nSe conserva el funcionamiento de las ocho plantas. La comunicación TCP con Simulink todavía está pendiente.') },
+      { label: 'Acerca de Estabiliza', click: () => show(`Estabiliza ${app.getVersion()}`, 'Laboratorio de sistemas de control. La física se ejecuta localmente. La comunicación TCP con Simulink está pendiente de implementación.') }
+    ] }
   ]));
 }
 async function check(interactive = false) {
@@ -81,7 +84,9 @@ else {
     origin = `http://127.0.0.1:${server.address().port}`;
     session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
     session.defaultSession.setPermissionCheckHandler(() => false);
-    window = new BrowserWindow({ width: 1440, height: 960, minWidth: 760, minHeight: 600, backgroundColor: '#edf4f4', title: 'Estabiliza', show: false, webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: true } });
+    const desktopTitle = `Estabiliza · v${app.getVersion()}`;
+    window = new BrowserWindow({ width: 1440, height: 960, minWidth: 760, minHeight: 600, backgroundColor: '#edf4f4', title: desktopTitle, show: false, webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: true } });
+    window.on('page-title-updated', event => { event.preventDefault(); window.setTitle(desktopTitle); });
     window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
     const restrictNavigation = (event, url) => { if (new URL(url).origin !== origin) event.preventDefault(); };
     window.webContents.on('will-navigate', restrictNavigation);

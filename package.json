@@ -1,10 +1,13 @@
 {
   "name": "sistemas-estabilizados",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Laboratorio didáctico de sistemas de control",
   "author": "Estabiliza",
-  "repository": { "type": "git", "url": "https://github.com/ccFierro/Stabiliza.git" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ccFierro/Stabiliza.git"
+  },
   "homepage": "https://github.com/ccFierro/Stabiliza",
   "main": "desktop/main.cjs",
   "type": "module",

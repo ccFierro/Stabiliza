@@ -1,6 +1,7 @@
 // Integration check against Chromium, including the packaged application.
 const fs = require('node:fs/promises');
 const path = require('node:path');
+const { app } = require('electron');
 exports.run = async (window, origin) => {
   const results = [];
   const errors = [];
@@ -18,7 +19,9 @@ exports.run = async (window, origin) => {
     const isolated = await window.webContents.executeJavaScript('typeof require === "undefined" && typeof process === "undefined"');
     if (!isolated) throw new Error('Node expuesto en la interfaz');
     const layout = await window.webContents.executeJavaScript('({width:innerWidth,scrollWidth:document.documentElement.scrollWidth})');
-    results.push({system,isolated,layout});
+    const title = window.getTitle();
+    if (!title.includes(`v${app.getVersion()}`)) throw new Error(`Versión ausente del título en ${system}`);
+    results.push({system,isolated,layout,title});
     if (system==='ball' || system==='twin') {
       await new Promise(resolve=>setTimeout(resolve,300));
       await fs.writeFile(path.join(process.cwd(),'dist',`preview-${system}.png`),(await window.webContents.capturePage()).toPNG());
