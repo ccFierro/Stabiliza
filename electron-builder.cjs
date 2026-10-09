@@ -7,6 +7,7 @@ module.exports = {
   directories: { output: 'dist' },
   files: ['*.html', '*.css', '*.js', '!*.test.js', '!ui-test-dom.js', 'desktop/**', 'package.json'],
   asar: true,
+  extraResources: [{from:'matlab',to:'matlab'}],
   artifactName: 'Estabiliza-${version}-${arch}.${ext}',
   win: { target: [{ target: 'nsis', arch: ['x64'] }] },
   nsis: { oneClick: false, perMachine: false, allowToChangeInstallationDirectory: true, deleteAppDataOnUninstall: false, createDesktopShortcut: true },

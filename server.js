@@ -8,7 +8,8 @@ const types = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascrip
 const allowed = new Set(['index.html', 'pivot.html', 'styles.css', 'app.js', 'physics.js', 'input-source.js', 'scopes.js', 'workspace-ui.js', 'lab.html', 'lab.js', 'plants.js', 'plant-scenes.js', 'update.html', 'update.css', 'update.js']);
 export function createLocalServer() {
 return http.createServer(async (req, res) => {
-  const name = new URL(req.url, 'http://localhost').pathname.slice(1) || 'index.html';
+  const name = new URL(req.url, 'http://localhost').pathname.slice(1) || 'gallery.html';
+  if (['pivot.html','lab.html'].includes(name)) { res.writeHead(302, { Location: '/gallery.html', 'Cache-Control': 'no-store' }); res.end(); return; }
   if (!allowed.has(name) && !['gallery.html','gallery.js','gallery.css'].includes(name)) { res.writeHead(404); res.end('No encontrado'); return; }
   try {
     const data = await readFile(path.join(root, name));

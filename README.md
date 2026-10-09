@@ -109,7 +109,9 @@ La preparación para Windows está en [DESKTOP.md](DESKTOP.md): ejecución con E
 
 ## Adaptador externo
 
-**El transporte real con MATLAB/Simulink sigue pendiente.** El servidor solo sirve archivos locales: no existe todavía un socket ni un endpoint de control. Las ocho plantas exponen el mismo adaptador JavaScript:
+La bola levitadora incluye un enlace TCP local en la app de escritorio y un bloque MATLAB System sin Instrument Control Toolbox. Ver [guía MATLAB](matlab/README.md). En Automático, el proceso local integra la física por cada paso solicitado; la interfaz muestra sus estados. Solo la bola está habilitada en esta versión.
+
+El adaptador JavaScript anterior se conserva para desarrollo de las plantas restantes:
 
 ```js
 window.estabiliza.readSchema();

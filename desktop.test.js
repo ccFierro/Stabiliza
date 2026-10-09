@@ -21,4 +21,5 @@ test('el servidor de escritorio usa puerto libre y solo expone recursos de la ap
   for(const route of ['/desktop/main.cjs','/package.json','/.env']) {
     const response=await fetch(origin+route);assert.equal(response.status,404);await response.text();
   }
+  for(const route of ['/pivot.html','/lab.html?system=pendulum']){const response=await fetch(origin+route,{redirect:'manual'});assert.equal(response.status,302);assert.equal(response.headers.get('location'),'/gallery.html');}
 });

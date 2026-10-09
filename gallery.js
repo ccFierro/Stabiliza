@@ -10,8 +10,10 @@ const scenes=[
 ];
 const gallery=document.getElementById('gallery');
 for(const [index,scene] of scenes.entries()){
-  const link=document.createElement('a');link.className='scene-card';link.href=scene.href;link.dataset.scene=scene.id;
+  const enabled=scene.id==='ball';
+  const link=document.createElement(enabled?'a':'article');link.className='scene-card';link.dataset.scene=scene.id;
+  if(enabled)link.href=scene.href;else link.setAttribute('aria-disabled','true');
   link.setAttribute('aria-labelledby',`name-${scene.id}`);
-  link.innerHTML=`<div class="thumbnail"><span class="number">${String(index+1).padStart(2,'0')}</span><span class="category">${scene.type}</span><svg viewBox="0 0 320 220" aria-hidden="true">${scene.drawing}</svg><span class="enter" aria-hidden="true">↗</span></div><div class="card-body"><h3 id="name-${scene.id}">${scene.name}</h3><p>${scene.description}</p><div class="signals"><span><small>MANDO</small>${scene.input}</span><span><small>OBSERVA</small>${scene.output}</span></div></div>`;
+  link.innerHTML=`<div class="thumbnail"><svg viewBox="0 0 320 220" aria-hidden="true">${scene.drawing}</svg>${enabled?'<span class="enter" aria-hidden="true">↗</span>':''}</div><div class="card-body"><h2 id="name-${scene.id}">${scene.name}</h2>${enabled?'':'<span class="unavailable">No disponible</span>'}</div>`;
   gallery.append(link);
 }

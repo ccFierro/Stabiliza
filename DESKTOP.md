@@ -1,6 +1,6 @@
 # Estabiliza para Windows
 
-La edición de escritorio incluye el navegador y el servidor local. El estudiante no necesita instalar Node.js. La conexión real con Simulink todavía está pendiente; empaquetar la app no la implementa.
+La edición de escritorio incluye el navegador y el servidor local. El estudiante no necesita instalar Node.js. La bola incluye el enlace local con MATLAB / Simulink descrito en [matlab/README.md](matlab/README.md).
 
 ## Probar y generar un instalador
 
@@ -69,4 +69,4 @@ Desde 0.1.3, después de la comprobación de inicio se abre una galería de las 
 
 El ejecutable inicial usa el icono predeterminado y no está firmado digitalmente. Windows puede mostrar avisos de aplicación desconocida. Antes de distribuir a toda la clase, configurar firma de código mediante secretos del proceso de compilación y validar una actualización real entre dos versiones en un equipo de prueba. No guardar certificados ni claves en el repositorio.
 
-La física permanece en la interfaz por ahora; el servidor usa un puerto local disponible y no interfiere con el servidor web del puerto 3000. El traslado de la física al proceso local y el protocolo TCP sincronizado con Simulink son trabajos siguientes.
+En modo manual la interfaz integra la planta. En Automático, el proceso local integra la bola mediante TCP sincronizado en 127.0.0.1:5050. El servidor de archivos usa otro puerto local disponible. Los archivos MATLAB se incluyen junto al ejecutable y se abren desde Ayuda.

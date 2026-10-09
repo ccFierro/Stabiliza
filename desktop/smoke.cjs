@@ -2,6 +2,33 @@
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const { app } = require('electron');
+const net = require('node:net');
+async function checkBallLink(window,origin){
+  const js=code=>window.webContents.executeJavaScript(code);
+  await js("document.getElementById('tab-link').click(); document.getElementById('automaticMode').checked=true; document.getElementById('automaticMode').onchange()");
+  const socket=net.createConnection({host:'127.0.0.1',port:5050});
+  await new Promise((resolve,reject)=>{socket.once('connect',resolve);socket.once('error',reject);});
+  async function exchange(values){
+    const packet=Buffer.alloc(32);values.forEach((value,i)=>packet.writeDoubleLE(value,i*8));
+    return new Promise((resolve,reject)=>{
+      let buffer=Buffer.alloc(0);
+      const timer=setTimeout(()=>{socket.destroy();reject(Error('TCP timeout'));},3000);
+      const data=chunk=>{buffer=Buffer.concat([buffer,chunk]);if(buffer.length>=64){clearTimeout(timer);socket.off('data',data);resolve(buffer);}};
+      socket.on('data',data);socket.write(packet);
+    });
+  }
+  try{
+    await exchange([0,0,0,.01]);
+    for(let i=1;i<=100;i++)await exchange([1,i,.5,.01]);
+    await new Promise(resolve=>setTimeout(resolve,150));
+    const state=await js('window.estabiliza.readMeasurement()');
+    if(Math.abs(state.time-1)>1e-8||!state.connected)throw Error('La interfaz no refleja la física TCP');
+    await fs.writeFile(path.join(process.cwd(),'dist','preview-link.png'),(await window.webContents.capturePage()).toPNG());
+    const closed=new Promise(resolve=>socket.once('close',resolve));
+    await window.loadURL(`${origin}/gallery.html`);
+    await Promise.race([closed,new Promise((_,reject)=>setTimeout(()=>reject(Error('Salir no desconecta TCP')),3000))]);
+  }finally{socket.destroy();}
+}
 exports.run = async (window, origin) => {
   const results = [];
   const errors = [];
@@ -26,6 +53,7 @@ exports.run = async (window, origin) => {
   if(window.webContents.getURL()!==`${origin}/gallery.html`)throw new Error('El inicio no lleva a la galería');
   const cards=await window.webContents.executeJavaScript("[...document.querySelectorAll('.scene-card')].map(a=>({system:a.dataset.scene,route:a.getAttribute('href')}))");
   if(cards.length!==8||new Set(cards.map(c=>c.system)).size!==8)throw new Error('La galería no contiene las ocho plantas');
+  if(cards.filter(c=>c.route).length!==1||cards.find(c=>c.route)?.system!=='ball')throw new Error('Solo la bola debe estar habilitada');
   const noPlant=await window.webContents.executeJavaScript('typeof window.estabiliza === "undefined"');
   if(!noPlant)throw new Error('Hay una planta ejecutándose detrás de la galería');
   await fs.writeFile(path.join(process.cwd(),'dist','preview-gallery.png'),(await window.webContents.capturePage()).toPNG());
@@ -35,7 +63,7 @@ exports.run = async (window, origin) => {
   if(!fits)throw new Error('La galería desborda en una pantalla estrecha');
   await fs.writeFile(path.join(process.cwd(),'dist','preview-gallery-mobile.png'),(await window.webContents.capturePage()).toPNG());
   window.setMinimumSize(760,600);window.setSize(1440,960);
-  for (const {route,system} of cards) {
+  for (const {route,system} of cards.filter(c=>c.route)) {
     await window.loadURL(origin+route);
     const deadline = Date.now()+10000;
     let state;
@@ -60,6 +88,8 @@ exports.run = async (window, origin) => {
       await fs.writeFile(path.join(process.cwd(),'dist',`preview-${system}.png`),(await window.webContents.capturePage()).toPNG());
     }
   }
+  await checkBallLink(window,origin);
+  results.push({tcp:true,navigationDisconnect:true});
   await fs.writeFile(path.join(process.cwd(),'dist','smoke-results.json'),JSON.stringify({results,errors},null,2));
   if(errors.length) throw new Error(errors.join('\n'));
 };

@@ -27,3 +27,8 @@
 #liveReadings strong small{white-space:nowrap}
 .perturbation-bar>div{flex-wrap:wrap}.perturbation-bar button{white-space:normal;max-width:100%}
 @media(max-width:700px){#sceneChoices{max-height:calc(100dvh - 170px)}.time-scale{flex-wrap:wrap}.schema-list .reading-row{font-size:12px}}
+.mode-switch{display:flex;align-items:center;gap:12px;font-weight:650;color:#214b50;cursor:pointer;padding:10px 0}
+.mode-switch input{appearance:none;width:42px;height:24px;border-radius:24px;background:#82999a;border:0;position:relative;cursor:pointer;flex:none;transition:background .2s}
+.mode-switch input:before{content:'';position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:white;box-shadow:0 1px 3px #0003;transition:transform .2s}
+.mode-switch input:checked{background:#008f98}.mode-switch input:checked:before{transform:translateX(18px)}
+.mode-switch input:focus-visible{outline:3px solid #007d88;outline-offset:3px}.mode-switch input:disabled{opacity:.45;cursor:not-allowed}

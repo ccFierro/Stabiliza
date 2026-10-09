@@ -24,7 +24,7 @@ jobs:
       - run: npm test
       - name: Crear instalador para verificar
         run: npm run dist:win
-      - name: Verificar las ocho plantas en el ejecutable
+      - name: Verificar galeria, bola y enlace TCP en el ejecutable
         shell: pwsh
         run: |
           $appProcess = Start-Process -FilePath '.\dist\win-unpacked\Estabiliza.exe' -ArgumentList '--smoke-test' -WindowStyle Hidden -PassThru
@@ -45,7 +45,7 @@ jobs:
               await github.rest.repos.createRelease({
                 ...context.repo, tag_name: tag, target_commitish: context.sha,
                 name: `Estabiliza ${tag}`, draft: true, prerelease: false,
-                body: 'Instalador para Windows x64. Pruebas automáticas y carga de las ocho plantas verificadas. Revisar antes de publicar. La comunicación TCP con Simulink aún está pendiente.'
+                body: 'Instalador Windows x64. Inicio simplificado, bola levitadora habilitada y bloque MATLAB System sin Instrument Control Toolbox. Revisar antes de publicar.'
               });
             }
       - name: Subir archivos al borrador (etiqueta)

@@ -12,6 +12,7 @@ const displayFactor=isPivot?180/Math.PI:100, positionUnit=isPivot?'°':'cm', vel
 const bounds=()=>isPivot?[-plant.parameters.angleLimit,plant.parameters.angleLimit]:[0,plant.parameters.height];
 let accumulator = 0, last = performance.now(), samples = [], nextSample = 0, fanAngle = 0, toastTimer;
 let acceleration=0;
+let tcpMode=false,tcpConnected=false;
 const svgNS = 'http://www.w3.org/2000/svg';
 function svg(tag, attributes, parent) { const node = document.createElementNS(svgNS, tag); for (const [k,v] of Object.entries(attributes)) node.setAttribute(k,v); parent.append(node); return node; }
 const toY = y => 399 - y / plant.parameters.height * 318;
@@ -99,7 +100,7 @@ updateView();
 window.addEventListener('resize',updateView);
 initWorkspace({document,window,onLayout:updateView});
 function syncInputUI() {
-  const connected=inputSource.connected;
+  const connected=tcpMode||inputSource.connected;
   $('localInputs').disabled=connected;
   $('configurationInputs').disabled=connected;
   $('pause').disabled=$('reset').disabled=connected;
@@ -107,14 +108,14 @@ function syncInputUI() {
   $('connectionStatus').classList.toggle('external',connected);
   $('connectionLabel').textContent=connected?'Entrada externa activa':'Control local';
   $('sourceTitle').textContent=connected?'Mando externo activo':'Sin comunicación externa';
-  $('sourceDescription').textContent=connected?'Los controles locales y la configuración están bloqueados mientras se reciben mandos.':'El puente de Simulink está pendiente. Al recibir mandos externos, el control local se bloqueará.';
+  $('sourceDescription').textContent=tcpMode?'TCP local · 127.0.0.1:5050 · Física sincronizada por pasos':connected?'Mando externo activo.':'Activa Automático y ejecuta el ejemplo o el bloque EstabilizaBall en MATLAB.';
   $('modeHelp').textContent=connected?'La planta está recibiendo el mando de una fuente externa.':isPivot?'Aplica mando al motor. El ángulo resulta del empuje, el peso y la inercia.':'Aplica potencia al ventilador. La altura es el resultado de la física.';
-  $('power').value=(connected?inputSource.external:inputSource.manual)*100;
+  $('power').value=(tcpMode?command:connected?inputSource.external:inputSource.manual)*100;
 }
 // Adapter contract for a future transport. No connection is inferred from a button.
 window.estabiliza = Object.freeze({
   receiveExternalCommand(value) {
-    if(document.hidden)return false;
+    if(document.hidden||tcpMode)return false;
     const key=isPivot?'motor':'fan';
     if(Array.isArray(value))value=value.length===1?value[0]:NaN;
     else if(value&&typeof value==='object')value=Object.keys(value).length===1&&Object.hasOwn(value,key)?value[key]:NaN;
@@ -124,7 +125,7 @@ window.estabiliza = Object.freeze({
     syncInputUI();return true;
   },
   disconnect() { inputSource.disconnect();command=0;syncInputUI(); },
-  readMeasurement() {return {system:isPivot?'pivot':'ball',time:plant.time,...(isPivot?{angle:plant.y,angularVelocity:plant.v,thrust:plant.air}:{height:plant.y,velocity:plant.v,air:plant.air}),command,commands:[command],reference,paused,halted:false,connected:inputSource.connected,parameters:{...plant.parameters},units:isPivot?{angle:'rad',angularVelocity:'rad/s',thrust:'N'}:{height:'m',velocity:'m/s',air:'m/s'}};},
+  readMeasurement() {return {system:isPivot?'pivot':'ball',time:plant.time,...(isPivot?{angle:plant.y,angularVelocity:plant.v,thrust:plant.air}:{height:plant.y,velocity:plant.v,air:plant.air}),command,commands:[command],reference,paused,halted:false,connected:tcpMode||inputSource.connected,parameters:{...plant.parameters},units:isPivot?{angle:'rad',angularVelocity:'rad/s',thrust:'N'}:{height:'m',velocity:'m/s',air:'m/s'}};},
   readSchema(){return {version:2,system:isPivot?'pivot':'ball',inputs:[{key:isPivot?'motor':'fan',label:isPivot?'Motor':'Ventilador',min:0,max:1,unit:'normalized'}],measurements:isPivot?{angle:'rad',angularVelocity:'rad/s',thrust:'N'}:{height:'m',velocity:'m/s',air:'m/s'},reference:{key:isPivot?'angle':'height',unit:isPivot?'rad':'m'},timeoutMs:500};}
 });
 $('reference').oninput=e=>{if(!inputSource.connected){reference=Number(e.target.value)/displayFactor;render();}};
@@ -132,10 +133,10 @@ $('power').oninput=e=>{inputSource.setManual(Number(e.target.value)/100);};
 for(const button of document.querySelectorAll('[data-power]'))button.onclick=()=>{
   if(inputSource.setManual(Number(button.dataset.power)/100))$('power').value=button.dataset.power;
 };
-$('pause').onclick=()=>{if(inputSource.connected)return;paused=!paused; accumulator=0;updatePause();};
+$('pause').onclick=()=>{if(tcpMode||inputSource.connected)return;paused=!paused; accumulator=0;updatePause();};
 function updatePause() { $('pause').innerHTML=paused?'▶ <span>Continuar</span>':'Ⅱ <span>Pausar</span>'; $('runLabel').textContent=paused?'Simulación en pausa':'Simulación activa';$('runningDot').style.background=paused?'#a57c33':'#00979d';for(const id of ['pushUp','pushDown','airLoss']) $(id).disabled=paused; }
 function resetExperiment() {plant.reset();inputSource.disconnect();syncInputUI();samples=[];nextSample=0;accumulator=0;command=0;acceleration=0;fanAngle=0;particles.forEach((p,i)=>{p.distance=(i*47)%(isPivot?110:350);});render();}
-$('reset').onclick=()=>{if(inputSource.connected)return;resetExperiment();toast('Planta reiniciada · mando en 0 %');};
+$('reset').onclick=()=>{if(tcpMode||inputSource.connected)return;resetExperiment();toast('Planta reiniciada · mando en 0 %');};
 for(const field of parameterFields) {
   const label=document.createElement('label');
   label.textContent=`${field.label} (${field.unit})`;
@@ -145,19 +146,19 @@ for(const field of parameterFields) {
 }
 $('parameterForm').onsubmit=e=>{
   e.preventDefault();
-  if(inputSource.connected){$('configStatus').textContent='Desconecta el mando externo antes de modificar la planta.';return;}
+  if(tcpMode||inputSource.connected){$('configStatus').textContent='Desconecta el mando externo antes de modificar la planta.';return;}
   const next={};for(const field of parameterFields)next[field.key]=Number($(`config-${field.key}`).value)*field.scale;
   try {plant.configure(next);updateScale();resetExperiment();$('configStatus').textContent='Configuración aplicada. Se reiniciaron la planta y el registro de datos.';}
   catch(error){$('configStatus').textContent=error.message;}
 };
 $('defaultParameters').onclick=()=>{
-  if(inputSource.connected)return;
+  if(tcpMode||inputSource.connected)return;
   for(const field of parameterFields)$(`config-${field.key}`).value=parameters[field.key]/field.scale;
   $('configStatus').textContent='Valores originales cargados. Pulsa Aplicar para iniciar el ensayo con ellos.';
 };
-$('pushUp').onclick=()=>{plant.impulse(1);toast(isPivot?'Impulso antihorario · +0,8 rad/s':'Impulso hacia arriba · +0,75 m/s');};
-$('pushDown').onclick=()=>{plant.impulse(-1);toast(isPivot?'Impulso horario · −0,8 rad/s':'Impulso hacia abajo · −0,75 m/s');};
-$('airLoss').onclick=()=>{plant.loseAir();toast(isPivot?'Empuje objetivo reducido un 45 % durante 1 s':'Flujo reducido un 45 % durante 1 s');};
+$('pushUp').onclick=()=>{if(tcpMode){void window.ballBridge.perturb('up').catch(error=>toast(error.message));return;}plant.impulse(1);toast(isPivot?'Impulso antihorario · +0,8 rad/s':'Impulso hacia arriba · +0,75 m/s');};
+$('pushDown').onclick=()=>{if(tcpMode){void window.ballBridge.perturb('down').catch(error=>toast(error.message));return;}plant.impulse(-1);toast(isPivot?'Impulso horario · −0,8 rad/s':'Impulso hacia abajo · −0,75 m/s');};
+$('airLoss').onclick=()=>{if(tcpMode){void window.ballBridge.perturb('air').catch(error=>toast(error.message));return;}plant.loseAir();toast(isPivot?'Empuje objetivo reducido un 45 % durante 1 s':'Flujo reducido un 45 % durante 1 s');};
 $('export').onclick=()=>{
   if(!samples.length) {toast('Inicia la simulación para registrar datos');return;}
   const p=plant.parameters;
@@ -252,14 +253,14 @@ function sampleState(){
   const f=isPivot?plant.air*p.length:plant.lastForce;
   const g=isPivot?-p.gravity*p.length*(p.armMass/2+p.motorMass)*Math.cos(plant.y):-p.mass*p.gravity;
   const b=isPivot?-p.damping*plant.v:0;
-  return {t:plant.time,y:plant.y,r:reference,v:plant.v,u:command,a:acceleration,air:plant.air,f,g,b,n:f+g+b,source:inputSource.connected?'externa':'manual'};
+  return {t:plant.time,y:plant.y,r:reference,v:plant.v,u:command,a:acceleration,air:plant.air,f,g,b,n:f+g+b,source:(tcpMode||inputSource.connected)?'externa':'manual'};
 }
 function frame(now) {
   const elapsed=Math.min((now-last)/1000,.1);last=now;
   const wasConnected=inputSource.connected;
-  const requested=inputSource.tick(now);
+  const requested=tcpMode?command:inputSource.tick(now);
   if(wasConnected!==inputSource.connected){syncInputUI();toast('Comunicación interrumpida · mando en 0 %');}
-  if(!paused&&!document.hidden) {
+  if(!tcpMode&&!paused&&!document.hidden) {
     accumulator+=elapsed;
     while(accumulator>=dt) {
       command=requested;
@@ -272,3 +273,12 @@ function frame(now) {
 }
 document.addEventListener('visibilitychange',()=>{last=performance.now();accumulator=0;if(document.hidden&&inputSource.connected){inputSource.disconnect();command=0;syncInputUI();}});
 syncInputUI();render();requestAnimationFrame(frame);
+
+if(!isPivot&&$('automaticMode')){
+ const toggle=$('automaticMode');toggle.disabled=!window.ballBridge;
+ if(window.ballBridge){
+ $('tcpHelp').textContent='Manual / Automático · El cambio de modo reinicia el ensayo.';
+ toggle.onchange=async()=>{toggle.disabled=true;try{if(toggle.checked){await window.ballBridge.arm(plant.parameters);resetExperiment();tcpMode=true;paused=true;}else{await window.ballBridge.stop();tcpMode=false;tcpConnected=false;resetExperiment();paused=true;}updatePause();syncInputUI();}catch(error){toggle.checked=tcpMode;toast(error.message);}finally{toggle.disabled=false;}};
+ window.ballBridge.subscribe(state=>{if(!tcpMode)return;const previous=plant.time,previousV=plant.v;Object.assign(plant,{time:state.time,y:state.y,v:state.v,air:state.air,lastForce:state.lastForce});command=state.command;tcpConnected=state.connected;paused=!tcpConnected;if(state.time<previous){samples=[];nextSample=0;}if(state.time>previous){acceleration=(state.v-previousV)/(state.time-previous);advanceAirAnimation(Math.min(.1,state.time-previous));samples.push(sampleState());if(samples.length>12000)samples.shift();}updatePause();syncInputUI();$('connectionLabel').textContent=state.status;$('tcpHelp').textContent=state.status+' · 127.0.0.1:5050';render();});
+ }
+}
