@@ -10,7 +10,7 @@ export function createLocalServer() {
 return http.createServer(async (req, res) => {
   const name = new URL(req.url, 'http://localhost').pathname.slice(1) || 'gallery.html';
   if (['pivot.html','lab.html'].includes(name)) { res.writeHead(302, { Location: '/gallery.html', 'Cache-Control': 'no-store' }); res.end(); return; }
-  if (!allowed.has(name) && !['gallery.html','gallery.js','gallery.css'].includes(name)) { res.writeHead(404); res.end('No encontrado'); return; }
+  if (!allowed.has(name) && !['gallery.html','gallery.js','gallery.css','exercises.html','exercises.js','exercises.css','exercise-models.js'].includes(name)) { res.writeHead(404); res.end('No encontrado'); return; }
   try {
     const data = await readFile(path.join(root, name));
     res.writeHead(200, { 'Content-Type': `${types[path.extname(name)]}; charset=utf-8`, 'Cache-Control': 'no-store', 'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'" });

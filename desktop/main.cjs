@@ -27,7 +27,7 @@ function menu(){
     ]},
     {label:'Ayuda',submenu:[
       {label:'Archivos MATLAB / Simulink',click:()=>void shell.openPath(app.isPackaged?path.join(process.resourcesPath,'matlab'):path.join(__dirname,'..','matlab'))},
-      {label:'Novedades de esta versión',click:()=>show(`Novedades · Estabiliza ${app.getVersion()}`,'Inicio simplificado. Bola levitadora habilitada y enlace local con MATLAB y Simulink mediante el bloque EstabilizaBall.')},
+      {label:'Novedades de esta versión',click:()=>show(`Novedades · Estabiliza ${app.getVersion()}`,'Nueva plataforma de ejercicios: seis modelos, casos aleatorios, gráficos, pistas de Simulink y comparación CSV. Acceso desde la portada.')},
       {label:'Acerca de Estabiliza',click:()=>show(`Estabiliza ${app.getVersion()}`,'Laboratorio local de sistemas de control. Enlace local MATLAB / Simulink disponible para la bola levitadora.')}
     ]}
   ]));
@@ -88,7 +88,7 @@ else{
         menu();
       },
       openLab:()=>window.loadURL(`${origin}/gallery.html`),
-      idle:async()=>{if(window.webContents.getURL()===`${origin}/gallery.html`)return true;try{return canInstall(await window.webContents.executeJavaScript('window.estabiliza?.readMeasurement()'));}catch{return false;}},
+      idle:async()=>{if(['/gallery.html','/exercises.html'].some(p=>window.webContents.getURL()===origin+p))return true;try{return canInstall(await window.webContents.executeJavaScript('window.estabiliza?.readMeasurement()'));}catch{return false;}},
       confirm:async()=>{
         const {response}=await dialog.showMessageBox(window,{type:'question',title:'Instalar actualización',message:'¿Reiniciar para actualizar?',detail:'Exporta los datos que quieras conservar. El ensayo actual no se restaura después del reinicio.',buttons:['Ahora no','Reiniciar e instalar'],defaultId:0,cancelId:0});
         return response===1;

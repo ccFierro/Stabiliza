@@ -90,6 +90,38 @@ exports.run = async (window, origin) => {
   }
   await checkBallLink(window,origin);
   results.push({tcp:true,navigationDisconnect:true});
+  await window.loadURL(`${origin}/exercises.html`);
+  await new Promise(resolve=>setTimeout(resolve,250));
+  const learning=await window.webContents.executeJavaScript(`(async()=>{
+    const $=id=>document.getElementById(id);
+    const exercises=[...document.querySelectorAll('[data-exercise]')];
+    if(exercises.length!==6)throw Error('Faltan ejercicios');
+    for(const button of exercises){button.click();$('randomize').click();if(document.querySelectorAll('.plot').length<3||$('status').classList.contains('error'))throw Error('Fallo al generar '+button.dataset.exercise);}
+    const saved={format:'estabiliza-exercise',version:1,model:'rc',parameters:{u:12,R1:1200,R2:3500,C:.00045},duration:12,initial:'zero',input:'step-at-zero'};
+    const caseTransfer=new DataTransfer();caseTransfer.items.add(new File([JSON.stringify(saved)],'ejercicio.json',{type:'application/json'}));
+    $('loadCase').files=caseTransfer.files;await $('loadCase').onchange({target:$('loadCase')});
+    if($('p-R1').value!=='1200'||!$('exerciseName').textContent.includes('R₁'))throw Error('No se recupera el ejercicio');
+    exercises[0].click();
+    const {simulate,exercises:models}=await import('/exercise-models.js');
+    const model=models[0],rows=simulate(model,model.defaults,model.duration);
+    const csv='t,i\\n'+rows.map(r=>r.t+','+r.i).join('\\n');
+    const transfer=new DataTransfer();transfer.items.add(new File([csv],'resultado.csv',{type:'text/csv'}));
+    $('importCSV').files=transfer.files;await $('importCSV').onchange({target:$('importCSV')});
+    if($('comparisonStatus').classList.contains('error')||!$('metrics').querySelector('tbody tr'))throw Error('Fallo al comparar CSV');
+    $('legend').firstElementChild.click();if(document.querySelectorAll('.plot').length!==2)throw Error('La leyenda no oculta señales');
+    $('legend').firstElementChild.click();return {exercises:6,csv:true,legend:true};
+  })()`);
+  await new Promise(resolve=>setTimeout(resolve,200));
+  await fs.writeFile(path.join(process.cwd(),'dist','preview-exercises.png'),(await window.webContents.capturePage()).toPNG());
+  await window.webContents.executeJavaScript("document.getElementById('plots').scrollIntoView({block:'start'})");
+  await new Promise(resolve=>setTimeout(resolve,200));
+  await fs.writeFile(path.join(process.cwd(),'dist','preview-exercise-plots.png'),(await window.webContents.capturePage()).toPNG());
+  await window.webContents.executeJavaScript('scrollTo(0,0)');
+  window.setMinimumSize(320,500);window.setSize(390,850);
+  await new Promise(resolve=>setTimeout(resolve,200));
+  if(!await window.webContents.executeJavaScript('document.documentElement.scrollWidth<=innerWidth'))throw Error('Modelamiento desborda en móvil');
+  await fs.writeFile(path.join(process.cwd(),'dist','preview-exercises-mobile.png'),(await window.webContents.capturePage()).toPNG());
+  results.push(learning);
   await fs.writeFile(path.join(process.cwd(),'dist','smoke-results.json'),JSON.stringify({results,errors},null,2));
   if(errors.length) throw new Error(errors.join('\n'));
 };

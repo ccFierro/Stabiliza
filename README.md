@@ -141,3 +141,10 @@ El ejemplo corresponde a la doble hélice. Usar las claves de la tabla inicial p
 Las plantas nuevas usan pasos de 5 ms y subpasos de hasta 1 ms. Los sistemas mecánicos usan Runge–Kutta de orden 4; estanques conservan volumen y la caldera resuelve la temperatura desde el balance energético.
 
 Ejecutar `node --test` o `npm.cmd test`. Las pruebas verifican equilibrio, inestabilidad, conservación, balances, topes, extremos de parámetros, perturbaciones y entradas externas. La integración de las ocho páginas comprueba mandos, navegación, gráficos y CSV con un DOM simulado (`ui-test-dom.js`). No sustituye una revisión visual en navegador.
+## Ejercicios de modelamiento (0.1.6)
+
+Desde la portada, **Ejercicios de modelamiento** abre seis prácticas independientes de la conexión TCP: RL, RC con dos resistencias, LC con dos inductancias ideales sin acoplamiento, masa-resorte, masa-resorte-amortiguador y masa con dos resortes. Se distinguen primer y segundo orden. Todos parten del reposo con un escalón aplicado en t = 0 y unidades SI.
+
+Incluye esquemas estáticos, ecuaciones, ayudas progresivas para bloques Simulink, gráficos por señal y leyendas interactivas. Los casos aleatorios eligen parámetros positivos dentro de rangos didácticos y una ventana según la constante de tiempo, período natural y amortiguamiento. Los casos se guardan y recuperan como JSON con versión de formato; los cambios manuales se aplican al pulsar Calcular respuesta. Los gráficos y exportaciones siempre corresponden al último ensayo calculado.
+
+Se puede exportar la referencia o importar resultados CSV (cabecera `t` seguida de las señales indicadas, coma como separador y punto decimal). El archivo debe cubrir todo el intervalo; la comparación interpola linealmente y muestra errores RMS y máximo en unidades físicas, sin certificar toda la implementación del estudiante. Importar datos no necesita MATLAB instalado. La integración RK4 se limita a un máximo de pasos y se verifica contra soluciones analíticas y balances físicos.
